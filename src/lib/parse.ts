@@ -74,11 +74,13 @@ export function parseReply(text: string, fallbackDate: string): Parsed {
 export function parseHealth(text: string): { date?: string; steps?: number; sleep?: number } | null {
   const date = text.match(/date\s*[=:]\s*(\d{4}-\d{2}-\d{2})/i)?.[1];
   const stepsS = text.match(/steps\s*[=:]\s*([\d,.]+)/i)?.[1];
-  const sleepS = text.match(/sleep\s*[=:]\s*([\d.]+)/i)?.[1];
+  const sleepS = text.match(/sleep\s*[=:]\s*([\d,.]+)/i)?.[1];
   if (!date && !stepsS && !sleepS) return null;
   const steps = stepsS ? Math.round(Number(stepsS.replace(/,/g, ''))) : undefined;
-  let sleep = sleepS ? Number(sleepS) : undefined;
-  if (sleep != null && sleep > 24) sleep = sleep / 60; // 分で来た場合
+  let sleep = sleepS ? Number(sleepS.replace(/,/g, '')) : undefined;
+  // ショートカットの設定次第で単位が変わるため、値の大きさで判定する
+  if (sleep != null && sleep > 1440) sleep = sleep / 3600; // 秒
+  else if (sleep != null && sleep > 24) sleep = sleep / 60; // 分
   return {
     date,
     steps: steps != null && isFinite(steps) ? steps : undefined,
