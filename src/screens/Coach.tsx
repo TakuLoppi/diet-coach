@@ -7,6 +7,7 @@ import { db, MEAL_LABEL, type Analysis, type DayLog, type MealSlot, type Profile
 import { fmtInt } from '../lib/calc';
 import { addDays, fmtJP, fmtShort } from '../lib/dates';
 import { copyText, shareToClaude, toast } from '../lib/media';
+import { exportToObsidian, OBSIDIAN_FOLDER } from '../lib/obsidian';
 import { consult, projectInstructions, weeklyReport } from '../lib/prompt';
 import type { AppData } from '../lib/useData';
 
@@ -54,7 +55,7 @@ export function ProjectSetup({ profile, data, onDone }: { profile: Profile; data
 
 export function Coach({ profile, data, onOpenSend }: { profile: Profile; data: AppData; onOpenSend: () => void }) {
   const [ready, setReady] = useState(getFlag);
-  const [sheet, setSheet] = useState<'weekly' | 'consult' | 'setup' | null>(null);
+  const [sheet, setSheet] = useState<'weekly' | 'consult' | 'setup' | 'obsidian' | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const weekly = useLiveQuery(() => db.weekly.orderBy('weekEnd').last(), []);
   const history = [...data.analyses].sort((a, b) => b.date.localeCompare(a.date));
@@ -97,6 +98,14 @@ export function Coach({ profile, data, onOpenSend }: { profile: Profile; data: A
           </span>
           <Icon name="right" />
         </button>
+        <button className="action" onClick={() => setSheet('obsidian')}>
+          <Icon name="dl" />
+          <span className="stack-2">
+            <strong>Obsidianに保存</strong>
+            <span className="sub small">日次・週次の報告をノートとして書き出す</span>
+          </span>
+          <Icon name="right" />
+        </button>
       </div>
 
       {weekly?.theme && (
@@ -119,6 +128,7 @@ export function Coach({ profile, data, onOpenSend }: { profile: Profile; data: A
 
       {sheet === 'weekly' && <WeeklySheet profile={profile} data={data} onClose={() => setSheet(null)} />}
       {sheet === 'consult' && <ConsultSheet profile={profile} data={data} onClose={() => setSheet(null)} />}
+      {sheet === 'obsidian' && <ObsidianSheet onClose={() => setSheet(null)} />}
     </div>
   );
 }
@@ -221,6 +231,47 @@ function ConsultSheet({ profile, data, onClose }: { profile: Profile; data: AppD
         Claudeに送る
       </button>
       <p className="sub tiny">相談の返答は取り込み不要です。Claudeアプリでそのまま読んでください。</p>
+    </Sheet>
+  );
+}
+
+export function ObsidianHowto() {
+  return (
+    <ol className="howto small">
+      <li>下のボタンを押すと共有メニューが開きます</li>
+      <li>「"ファイル"に保存」→「iCloud Drive」→「{OBSIDIAN_FOLDER}」フォルダを選んで「保存」</li>
+      <li>同じ名前のファイルがあると聞かれたら「置き換える」</li>
+      <li>MacのObsidian（保管庫の「{OBSIDIAN_FOLDER}」フォルダ）に自動で表示されます</li>
+    </ol>
+  );
+}
+
+function ObsidianSheet({ onClose }: { onClose: () => void }) {
+  const analyses = useLiveQuery(() => db.analyses.toArray(), [], [] as Analysis[]);
+  const weeklies = useLiveQuery(() => db.weekly.toArray(), [], []);
+  const newDaily = analyses.filter((a) => !a.exportedAt).map((a) => a.date);
+  const newWeekly = weeklies.filter((w) => !w.exportedAt).map((w) => w.weekEnd);
+  const newCount = newDaily.length + newWeekly.length;
+  const allCount = analyses.length + weeklies.length;
+
+  const run = async (dates: string[], weekEnds: string[]) => {
+    const r = await exportToObsidian({ dates, weekEnds });
+    if (r === 'empty') toast('書き出す報告がありません');
+    if (r === 'downloaded') toast('ファイルをダウンロードしました');
+    if (r === 'shared') toast(`${dates.length + weekEnds.length}件を書き出しました`);
+  };
+
+  return (
+    <Sheet title="Obsidianに保存" onClose={onClose}>
+      <ObsidianHowto />
+      <button className="btn-primary" disabled={!newCount} onClick={() => run(newDaily, newWeekly)}>
+        <Icon name="dl" />
+        {newCount ? `未保存の${newCount}件を保存` : '未保存の報告はありません'}
+      </button>
+      <button className="btn-secondary" disabled={!allCount} onClick={() => run(analyses.map((a) => a.date), weeklies.map((w) => w.weekEnd))}>
+        すべて（{allCount}件）を保存し直す
+      </button>
+      <p className="sub tiny">ファイル名は「2026-11-18 日次.md」「2026-11-22 週次.md」の形です。返答を取り込み直した報告は、未保存に戻ります。</p>
     </Sheet>
   );
 }

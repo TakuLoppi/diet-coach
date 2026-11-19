@@ -5,11 +5,11 @@ import { db, type Profile } from '../db';
 import { todayKey } from '../lib/dates';
 import { base64ToBlob, blobToBase64, downloadBlob, toast } from '../lib/media';
 import type { AppData } from '../lib/useData';
-import { ProjectSetup } from './Coach';
+import { ObsidianHowto, ProjectSetup } from './Coach';
 import { ProfileForm } from './ProfileForm';
 import { SHORTCUT_NAME } from './SendReport';
 
-type Section = 'profile' | 'claude' | 'shortcut' | 'reminder' | 'favorites' | 'backup' | null;
+type Section = 'profile' | 'claude' | 'shortcut' | 'reminder' | 'obsidian' | 'favorites' | 'backup' | null;
 
 export function Settings({ profile, data, onClose }: { profile: Profile; data: AppData; onClose: () => void }) {
   const [open, setOpen] = useState<Section>(null);
@@ -54,6 +54,11 @@ export function Settings({ profile, data, onClose }: { profile: Profile; data: A
           <li>7:30「体重を測れ。そして昨日の報告を送れ！」</li>
           <li>21:00「今日の食事、全部撮ったか？水分は足りてるか？」</li>
         </ul>
+      </Group>
+
+      <Group title="Obsidianへの保存" open={open === 'obsidian'} onToggle={() => toggle('obsidian')}>
+        <p className="small">日次・週次の報告をMarkdownノートとしてiCloud Driveに保存し、MacのObsidianで読めるようにします。保存はコーチタブの「Obsidianに保存」、または報告画面の⑤から行います。</p>
+        <ObsidianHowto />
       </Group>
 
       <Group title="よく食べるもの" open={open === 'favorites'} onToggle={() => toggle('favorites')}>

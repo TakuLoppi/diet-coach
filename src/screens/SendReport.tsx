@@ -7,6 +7,7 @@ import { db, MEAL_LABEL, MEAL_SLOTS, saveDay, type DayLog, type MealSlot, type P
 import { avgAt, fmtInt } from '../lib/calc';
 import { addDays, fmtJP, fmtShort } from '../lib/dates';
 import { readClipboard, shareToClaude, toast } from '../lib/media';
+import { exportToObsidian } from '../lib/obsidian';
 import { parseHealth } from '../lib/parse';
 import { dailyReport } from '../lib/prompt';
 import type { AppData } from '../lib/useData';
@@ -183,7 +184,22 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
               取り込み済み{analysis.grade ? `（評価 ${analysis.grade}・${analysis.kcal != null ? fmtInt(analysis.kcal) + 'kcal' : ''}）` : ''}
             </p>
           ) : null}
-          <ImportReply fallbackDate={date} onDone={(p) => p.kind === 'daily' && p.analysis.date === date && onClose()} />
+          <ImportReply fallbackDate={date} />
+        </li>
+        <li>
+          <h3>Obsidianに保存</h3>
+          <p className="sub small">共有メニューで「"ファイル"に保存」→ iCloud Driveの「ダイエットコーチ」フォルダへ。</p>
+          <button
+            className="btn-secondary"
+            disabled={!analysis}
+            onClick={async () => {
+              const r = await exportToObsidian({ dates: [date] });
+              if (r === 'shared' || r === 'downloaded') toast('Obsidian用に書き出しました');
+            }}
+          >
+            <Icon name="dl" size={18} />
+            {analysis ? (analysis.exportedAt ? '保存済み（もう一度保存）' : 'この日の報告を保存') : '返答を取り込むと保存できます'}
+          </button>
         </li>
       </ol>
     </Sheet>

@@ -73,6 +73,7 @@ export interface Analysis {
   coach?: string;
   raw: string;
   importedAt: number;
+  exportedAt?: number; // Obsidian用に書き出した日時
 }
 
 export interface Weekly {
@@ -81,6 +82,7 @@ export interface Weekly {
   summary?: string;
   raw: string;
   importedAt: number;
+  exportedAt?: number;
 }
 
 export interface Favorite {
