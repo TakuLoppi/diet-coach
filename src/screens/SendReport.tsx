@@ -28,12 +28,14 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
   if (log.steps == null) missing.push('歩数');
   if (log.sleepH == null) missing.push('睡眠');
 
-  const pasteHealth = async () => {
-    const t = await readClipboard();
-    const h = t ? parseHealth(t) : null;
-    if (!h) {
-      toast('ショートカットの結果が見つかりません。先にショートカットを実行してください');
-      return;
+  const [pasteBox, setPasteBox] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+
+  const applyHealth = async (t: string) => {
+    const h = parseHealth(t);
+    if (!h || (h.steps == null && h.sleep == null)) {
+      toast(`歩数を読み取れませんでした（中身：${t.trim().slice(0, 40) || '空'}）`);
+      return false;
     }
     const target = h.date ?? date;
     await saveDay(target, {
@@ -41,7 +43,21 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
       ...(h.sleep != null ? { sleepH: h.sleep } : {}),
     });
     if (target !== date) setDate(target);
-    toast(`歩数${h.steps != null ? fmtInt(h.steps) + '歩' : '—'}${h.sleep != null ? `・睡眠${h.sleep}時間` : ''}を取り込みました`);
+    toast(`${fmtShort(target)}の歩数${h.steps != null ? fmtInt(h.steps) + '歩' : '—'}${h.sleep != null ? `・睡眠${h.sleep}時間` : ''}を取り込みました`);
+    setPasteBox(false);
+    setPasteText('');
+    return true;
+  };
+
+  const pasteHealth = async () => {
+    const t = await readClipboard();
+    if (t == null || !t.trim()) {
+      // iPhoneで読み取りが許可されなかった場合などは、手動の貼り付け欄を出す
+      setPasteBox(true);
+      toast('自動で読み取れませんでした。下の欄を長押しして「ペースト」してください');
+      return;
+    }
+    if (!(await applyHealth(t))) setPasteBox(true);
   };
 
   const send = async () => {
@@ -106,6 +122,25 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
               貼り付け
             </button>
           </div>
+          {pasteBox && (
+            <label className="field">
+              <span className="field-label">ここを長押し →「ペースト」</span>
+              <input
+                type="text"
+                value={pasteText}
+                placeholder="DIETLOG date=… steps=…"
+                onChange={(e) => {
+                  setPasteText(e.target.value);
+                  if (/steps/i.test(e.target.value)) void applyHealth(e.target.value);
+                }}
+              />
+              {pasteText.trim() && !/steps/i.test(pasteText) && (
+                <button className="btn-secondary" onClick={() => void applyHealth(pasteText)}>
+                  取り込む
+                </button>
+              )}
+            </label>
+          )}
           <p className="small">
             歩数 <strong>{log.steps != null ? `${fmtInt(log.steps)}歩` : '未取得'}</strong>
           </p>

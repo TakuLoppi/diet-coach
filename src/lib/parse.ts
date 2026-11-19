@@ -71,11 +71,19 @@ export function parseReply(text: string, fallbackDate: string): Parsed {
 }
 
 /** ショートカットがコピーする「DIETLOG date=2026-11-17 steps=8123 sleep=6.5」を読む */
-export function parseHealth(text: string): { date?: string; steps?: number; sleep?: number } | null {
-  const date = text.match(/date\s*[=:]\s*(\d{4}-\d{2}-\d{2})/i)?.[1];
-  const stepsS = text.match(/steps\s*[=:]\s*([\d,.]+)/i)?.[1];
+export function parseHealth(raw: string): { date?: string; steps?: number; sleep?: number } | null {
+  // 全角→半角、区切りの揺れを吸収
+  const text = raw.normalize('NFKC').replace(/：/g, ':');
+  const dm = text.match(/date\s*[=:]\s*(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})/i);
+  const date = dm ? `${dm[1]}-${dm[2].padStart(2, '0')}-${dm[3].padStart(2, '0')}` : undefined;
+  let stepsS = text.match(/steps\s*[=:]\s*([\d,.]+)/i)?.[1];
   const sleepS = text.match(/sleep\s*[=:]\s*([\d,.]+)/i)?.[1];
-  if (!date && !stepsS && !sleepS) return null;
+  // 「8123」「8,123歩」のように数字だけが来た場合は歩数とみなす
+  if (!dm && !stepsS && !sleepS) {
+    const only = text.trim().match(/^([\d,]+(?:\.\d+)?)\s*(歩)?$/);
+    if (!only) return null;
+    stepsS = only[1];
+  }
   const steps = stepsS ? Math.round(Number(stepsS.replace(/,/g, ''))) : undefined;
   let sleep = sleepS ? Number(sleepS.replace(/,/g, '')) : undefined;
   // ショートカットの設定次第で単位が変わるため、値の大きさで判定する
