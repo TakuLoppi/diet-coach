@@ -84,6 +84,6 @@ export function parseHealth(text: string): { date?: string; steps?: number; slee
   return {
     date,
     steps: steps != null && isFinite(steps) ? steps : undefined,
-    sleep: sleep != null && isFinite(sleep) ? Math.round(sleep * 10) / 10 : undefined,
+    sleep: sleep != null && isFinite(sleep) && sleep > 0 ? Math.round(sleep * 10) / 10 : undefined,
   };
 }

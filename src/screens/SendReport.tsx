@@ -2,10 +2,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Icon } from '../components/Icon';
 import { ImportReply } from '../components/ImportReply';
-import { Sheet } from '../components/ui';
+import { NumField, Sheet } from '../components/ui';
 import { db, MEAL_LABEL, MEAL_SLOTS, saveDay, type DayLog, type MealSlot, type Photo, type Profile } from '../db';
-import { avgAt, fmt1, fmtInt } from '../lib/calc';
-import { addDays, fmtJP } from '../lib/dates';
+import { avgAt, fmtInt } from '../lib/calc';
+import { addDays, fmtJP, fmtShort } from '../lib/dates';
 import { readClipboard, shareToClaude, toast } from '../lib/media';
 import { parseHealth } from '../lib/parse';
 import { dailyReport } from '../lib/prompt';
@@ -41,7 +41,7 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
       ...(h.sleep != null ? { sleepH: h.sleep } : {}),
     });
     if (target !== date) setDate(target);
-    toast(`歩数${h.steps != null ? fmtInt(h.steps) + '歩' : '—'}・睡眠${h.sleep != null ? h.sleep + '時間' : '—'}を取り込みました`);
+    toast(`歩数${h.steps != null ? fmtInt(h.steps) + '歩' : '—'}${h.sleep != null ? `・睡眠${h.sleep}時間` : ''}を取り込みました`);
   };
 
   const send = async () => {
@@ -92,9 +92,9 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
 
       <ol className="steps">
         <li>
-          <h3>歩数と睡眠を取り込む</h3>
+          <h3>歩数を取り込み、睡眠を入力</h3>
           <p className="sub small">
-            ショートカット「{SHORTCUT_NAME}」を実行すると数値がコピーされます。戻ってきたら貼り付けボタンを押してください。
+            ショートカット「{SHORTCUT_NAME}」を実行すると歩数がコピーされます。戻ってきたら貼り付けボタンを押してください。
           </p>
           <div className="row gap-8">
             <a className="btn-secondary flex-1" href={`shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT_NAME)}`}>
@@ -107,9 +107,16 @@ export function SendReport({ profile, data, onClose }: { profile: Profile; data:
             </button>
           </div>
           <p className="small">
-            歩数 <strong>{log.steps != null ? `${fmtInt(log.steps)}歩` : '未取得'}</strong>／睡眠{' '}
-            <strong>{log.sleepH != null ? `${fmt1(log.sleepH)}時間` : '未取得'}</strong>
+            歩数 <strong>{log.steps != null ? `${fmtInt(log.steps)}歩` : '未取得'}</strong>
           </p>
+          <NumField
+            label={`睡眠（${fmtShort(date)}の夜〜今朝）`}
+            unit="時間"
+            step="0.1"
+            placeholder="例：6.5"
+            value={log.sleepH}
+            onCommit={(v) => saveDay(date, { sleepH: v != null && v > 0 && v <= 24 ? Math.round(v * 10) / 10 : undefined })}
+          />
         </li>
         <li>
           <h3>記録を確認</h3>

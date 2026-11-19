@@ -75,7 +75,7 @@ export function Record({ data, date, setDate }: { data: AppData; date: string; s
 
       <section className="card gap-12">
         <h3>歩数・睡眠</h3>
-        <p className="sub small">翌朝、報告を送るときにショートカットでヘルスケアから自動で入ります。手入力もできます。</p>
+        <p className="sub small">歩数は翌朝、報告を送るときにショートカットで自動で入ります（手入力も可）。睡眠は手入力してください。</p>
         <div className="grid-2">
           <NumField label="歩数" unit="歩" step="1" value={log.steps} onCommit={(v) => save({ steps: v != null ? Math.round(v) : undefined })} />
           <NumField label="睡眠（この日の夜）" unit="時間" step="0.1" value={log.sleepH} onCommit={(v) => save({ sleepH: v })} />

@@ -163,7 +163,7 @@ export function Home({
           />
           <MiniStat
             label={`睡眠（${fmtShort(yesterday)}の夜）`}
-            value={yLog?.sleepH != null ? `${fmt1(yLog.sleepH)}h${yLog.sleepH < 6.5 ? ' 不足' : ''}` : '未取得'}
+            value={yLog?.sleepH != null ? `${fmt1(yLog.sleepH)}h${yLog.sleepH < 6.5 ? ' 不足' : ''}` : '未入力'}
             ratio={(yLog?.sleepH ?? 0) / 7.5}
             warn={yLog?.sleepH != null && yLog.sleepH < 6.5}
           />

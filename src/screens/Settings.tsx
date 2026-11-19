@@ -39,7 +39,7 @@ export function Settings({ profile, data, onClose }: { profile: Profile; data: A
         <ProjectSetup profile={profile} data={data} />
       </Group>
 
-      <Group title="歩数・睡眠のショートカット" open={open === 'shortcut'} onToggle={() => toggle('shortcut')}>
+      <Group title="歩数のショートカット" open={open === 'shortcut'} onToggle={() => toggle('shortcut')}>
         <ShortcutGuide />
       </Group>
 
@@ -101,19 +101,17 @@ function ShortcutGuide() {
   return (
     <div className="stack gap-8 small">
       <p>
-        iPhoneの「ショートカット」Appで、前日の歩数と睡眠をヘルスケアから読み取ってコピーするショートカットを作ります。名前は必ず「
+        iPhoneの「ショートカット」Appで、前日の歩数をヘルスケアから読み取ってコピーするショートカットを作ります。名前は必ず「
         <strong>{SHORTCUT_NAME}</strong>」にしてください。
       </p>
       <ol className="howto">
         <li>「日付を調整」：現在の日付 の「日の始まりを取得」→ 名前を「今日0時」に</li>
         <li>「日付を調整」：今日0時 から 1日 を減算 → 名前を「昨日0時」に</li>
         <li>「ヘルスケアサンプルを検索」：歩数、開始日が 昨日0時〜今日0時 の範囲 →「統計を計算」：合計</li>
-        <li>「日付を調整」：昨日0時 に 18時間 を加算 → 名前を「昨夜」に</li>
-        <li>「ヘルスケアサンプルを検索」：睡眠分析、開始日が 昨夜〜現在の日付 の範囲 →「ヘルスケアサンプルから詳細を取得」：長さ →「統計を計算」：合計</li>
         <li>「日付をフォーマット」：昨日0時、カスタム yyyy-MM-dd</li>
         <li>
           「テキスト」に次の形で入力（[ ]は上の結果の変数）：
-          <code className="code">DIETLOG date=[日付] steps=[歩数] sleep=[睡眠時間]</code>
+          <code className="code">DIETLOG date=[日付] steps=[歩数]</code>
         </li>
         <li>「クリップボードにコピー」を追加して完成</li>
       </ol>
